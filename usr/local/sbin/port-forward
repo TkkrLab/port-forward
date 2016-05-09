@@ -1,5 +1,12 @@
 #!/bin/bash
-config=/etc/port-forward.conf
+
+#settings
+
+config=/etc/port-forward.conf #location of the config script
+table="PFORWARD" #chain name in the nat table
+
+
+#script
 
 function apply {
   if [ -z "${dest}" ] || [ -z "${dport}" ]; then
@@ -50,7 +57,6 @@ function run {
   echo "done"
 }
 (
-  table="PFORWARD"
   [ "${1}" = "stop" ] && {
     iptables -t nat --flush "${table}"
     echo "Port forwarding stopped"
