@@ -2,7 +2,7 @@
 
 #settings
 
-config=/etc/port-forward.conf #location of the config script
+config=/etc/port-forward.conf #location of the config file
 table="PFORWARD" #chain name in the nat table
 
 
