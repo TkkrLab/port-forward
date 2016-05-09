@@ -1,0 +1,58 @@
+#!/bin/bash
+config=/etc/port-forward.conf
+
+function apply {
+  if [ -z "${dest}" ] || [ -z "${dport}" ]; then
+      echo "Rule '${comment}' malformed" >&2
+    else
+      sport="$(echo "${sport}" | sed 's/-/:/g')"
+      dport="$(echo "${dport}" | sed 's/-/:/g')"
+      [ -z "${sport}" ] && sport="${dport}"
+      [ -z "${prot}" ] && prot="tcp udp" || prot="$(echo "${prot}" | sed 's/\s\+/\n/g;/^$/d' | sort -u)"
+      [ -z "${src}" ] && src="0.0.0.0/0"
+      for i in ${prot}; do
+        iptables -t nat -A "${table}" \
+                 -p "${prot}" -m multiport --dports "${sport}" \
+                 -s "${src}" \
+                 -j DNAT --to-destination "${dest}:${dport}" \
+                 -m comment --comment "Port forward: ${comment}" 2>&1 || echo "Rule '${comment}' malformed"
+      done
+  fi
+}
+
+function run {
+  readarray rules < <(sed 's/^\s\+//;s/#.*$//;s/\s\+$//;/^$/d;s/\s/ /g' "$config")  || exit
+  comment=""
+  iptables -t nat --flush "${table}"
+  for i in "${rules[@]}"; do
+    line="${i::-1}"
+    if [ "${line::1}${line:${#line} -1}" = "[]" ]; then
+      [ -n "$comment" ] && apply
+      comment="${line:1:-1}"
+      src=""
+      dest=""
+      sport=""
+      dport=""
+      prot=""
+    else
+      value="$(echo "${line#*=}" | sed 's/^\s\+//;s/\s\+$//')"
+      field="$(echo "${line%=*}" | sed 's/^\s\+//;s/\s\+$//')"
+      case "${field}" in
+        "src")   src="${value}" ;;
+        "dest")  dest="${value}";;
+        "sport") sport="${value}";;
+        "dport") dport="${value}";;
+        "prot")  prot="${value}";;
+      esac
+    fi
+  done
+  [ -n "$comment" ] && apply
+  echo "done"
+}
+(
+  table="PFORWARD"
+  [ "${1}" = "stop" ] && {
+    iptables -t nat --flush "${table}"
+    echo "Port forwarding stopped"
+  } || run
+)

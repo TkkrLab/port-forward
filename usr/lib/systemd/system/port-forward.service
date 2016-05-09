@@ -1,0 +1,16 @@
+[Unit]
+Description=Port forward
+After=iptables.service
+PartOf=iptables.service
+ReloadPropagatedFrom=iptables.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=/usr/local/sbin/port-forward start
+ExecStop=/usr/local/sbin/port-forward stop
+ExecReload=/usr/local/sbin/port-forward reload
+
+[Install]
+WantedBy=multi-user.target
