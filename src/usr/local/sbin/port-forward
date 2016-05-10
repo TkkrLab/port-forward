@@ -12,8 +12,8 @@ function apply {
   if [ -z "${dest}" ] || [ -z "${dport}" ]; then
       echo "Rule '${comment}' malformed" >&2
     else
-      sport="$(echo "${sport}" | sed 's/-/:/g')"
-      dport="$(echo "${dport}" | sed 's/-/:/g')"
+      sport="$(echo "${sport}" | sed 's/\s*-\s*/:/g;s/\(\s\|\.\)/,/g')"
+      dport="$(echo "${dport}" | sed 's/\s*-\s*/:/g;s/\(\s\|\.\)/,/g')"
       [ -z "${sport}" ] && sport="${dport}"
       [ -z "${prot}" ] && prot="tcp udp" || prot="$(echo "${prot}" | sed 's/\s\+/\n/g;/^$/d' | sort -u)"
       [ -z "${src}" ] && src="0.0.0.0/0"
@@ -28,7 +28,7 @@ function apply {
 }
 
 function run {
-  readarray rules < <(sed 's/^\s\+//;s/#.*$//;s/\s\+$//;/^$/d;s/\s/ /g' "$config")  || exit
+  readarray rules < <(sed 's/^\s\+//;s/#.*$//;s/\s\+$//;/^$/d;s/\s\+/ /g' "$config")  || exit
   comment=""
   iptables -t nat --flush "${table}"
   for i in "${rules[@]}"; do
