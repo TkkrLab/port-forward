@@ -22,7 +22,7 @@ function apply {
                  -p "${prot}" -m multiport --dports "${sport}" \
                  -s "${src}" \
                  -j DNAT --to-destination "${dest}:${dport}" \
-                 -m comment --comment "Port forward: ${comment}" 2>&1 || echo "Rule '${comment}' malformed"
+                 -m comment --comment "Port forward: ${comment}" || echo "Rule '${comment}' malformed" >&2
       done
   fi
 }
@@ -54,11 +54,11 @@ function run {
     fi
   done
   [ -n "$comment" ] && apply
-  echo "done"
+  echo "Port forwarding started" >&2
 }
 (
   [ "${1}" = "stop" ] && {
     iptables -t nat --flush "${table}"
-    echo "Port forwarding stopped"
+    echo "Port forwarding stopped" >&2
   } || run
 )
