@@ -1,34 +1,28 @@
 #!/bin/bash
-
-#settings
-
-config=/etc/port-forward.conf #location of the config file
-table="PFORWARD" #chain name in the nat table
-
-
-#script
+#set -x
+config=/etc/port-forward.conf
 
 function apply {
   if [ -z "${dest}" ] || [ -z "${dport}" ]; then
       echo "Rule '${comment}' malformed" >&2
     else
-      sport="$(echo "${sport}" | sed 's/\s*-\s*/:/g;s/\(\s\|\.\)/,/g')"
-      dport="$(echo "${dport}" | sed 's/\s*-\s*/:/g;s/\(\s\|\.\)/,/g')"
       [ -z "${sport}" ] && sport="${dport}"
       [ -z "${prot}" ] && prot="tcp udp" || prot="$(echo "${prot}" | sed 's/\s\+/\n/g;/^$/d' | sort -u)"
       [ -z "${src}" ] && src="0.0.0.0/0"
+      sport="$(echo "${sport}" | sed 's/-/:/g')"
+      dport="$(echo "${dport}" | sed 's/:/-/g')"
       for i in ${prot}; do
         iptables -t nat -A "${table}" \
                  -p "${prot}" -m multiport --dports "${sport}" \
                  -s "${src}" \
                  -j DNAT --to-destination "${dest}:${dport}" \
-                 -m comment --comment "Port forward: ${comment}" || echo "Rule '${comment}' malformed" >&2
+                 -m comment --comment "Port forward: ${comment}" 2>&1 || echo "Rule '${comment}' malformed"
       done
   fi
 }
 
 function run {
-  readarray rules < <(sed 's/^\s\+//;s/#.*$//;s/\s\+$//;/^$/d;s/\s\+/ /g' "$config")  || exit
+  readarray rules < <(sed 's/^\s\+//;s/#.*$//;s/\s\+$//;/^$/d;s/\s/ /g' "$config")  || exit
   comment=""
   iptables -t nat --flush "${table}"
   for i in "${rules[@]}"; do
@@ -54,11 +48,12 @@ function run {
     fi
   done
   [ -n "$comment" ] && apply
-  echo "Port forwarding started" >&2
+  echo "done"
 }
 (
+  table="PFORWARD"
   [ "${1}" = "stop" ] && {
     iptables -t nat --flush "${table}"
-    echo "Port forwarding stopped" >&2
+    echo "Port forwarding stopped"
   } || run
 )
