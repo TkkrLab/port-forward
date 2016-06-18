@@ -15,10 +15,10 @@ source=("git+https://github.com/TkkrLab/port-forward.git")
 backup=('etc/port-forward.conf')
 md5sums=('SKIP')
 package() {
-	install -d "$pkgdir/usr/sbin/"
+	install -d "$pkgdir/usr/bin/"
 	install -d "$pkgdir/usr/lib/systemd/system/"
 	install -d "$pkgdir/etc/"
-	install -m755 "$gitname/src/usr/local/sbin/port-forward" "$pkgdir/usr/sbin/port-forward"
+	install -m755 "$gitname/src/usr/local/sbin/port-forward" "$pkgdir/usr/bin/port-forward"
 	install -m644 "$gitname/src/usr/lib/systemd/system/port-forward.service" "$pkgdir/usr/lib/systemd/system/port-forward.service"
 	install -m644 "$gitname/src/etc/port-forward.conf" "$pkgdir/etc/port-forward.conf"
 }
