@@ -48,7 +48,7 @@ function run {
     fi
   done
   [ -n "$comment" ] && apply
-  echo "done"
+  echo "Port forwarding started"
 }
 (
   table="PFORWARD"
