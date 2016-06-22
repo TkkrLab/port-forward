@@ -51,9 +51,14 @@ function run {
   echo "Port forwarding started"
 }
 (
+  [ "$(id -u)" != "0" ] && {
+    echo "$(basename "${0}") must be run as root"
+    exit 1
+  }
   table="PFORWARD"
   [ "${1}" = "stop" ] && {
     iptables -t nat --flush "${table}"
     echo "Port forwarding stopped"
   } || run
+  exit 0
 )
